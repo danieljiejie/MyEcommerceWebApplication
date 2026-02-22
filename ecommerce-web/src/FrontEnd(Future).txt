@@ -1,0 +1,246 @@
+
+Display Product Reviews
+import { useState, useEffect } from 'react';
+import { getProductReviews, getProductRatingStats } from './services/api';
+
+function ProductReviews({ productId }) {
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => {
+    fetchReviews();
+    fetchStats();
+  }, [productId, filter]);
+
+  const fetchReviews = async () => {
+    const options = {};
+    
+    if (filter !== 'all') {
+      options.min_rating = parseInt(filter);
+      options.max_rating = parseInt(filter);
+    }
+
+    const result = await getProductReviews(productId, options);
+    setReviews(result.reviews);
+  };
+
+  const fetchStats = async () => {
+    const stats = await getProductRatingStats(productId);
+    setStats(stats);
+  };
+
+  return (
+    <div>
+      <h2>Reviews ({stats?.total_reviews})</h2>
+      <p>Average Rating: {stats?.average_rating} ⭐</p>
+      
+      {/* Rating Distribution */}
+      <div className="rating-bars">
+        {[5,4,3,2,1].map(rating => (
+          <div key={rating}>
+            <span>{rating} ⭐</span>
+            <div className="bar">
+              <div 
+                style={{ width: `${stats?.distribution[rating]?.percentage}%` }}
+              />
+            </div>
+            <span>{stats?.distribution[rating]?.count}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter */}
+      <select onChange={(e) => setFilter(e.target.value)}>
+        <option value="all">All Ratings</option>
+        <option value="5">5 Stars</option>
+        <option value="4">4 Stars</option>
+        <option value="3">3 Stars</option>
+        <option value="2">2 Stars</option>
+        <option value="1">1 Star</option>
+      </select>
+
+      {/* Reviews List */}
+      {reviews.map(review => (
+        <div key={review.id} className="review">
+          <div className="rating">{'⭐'.repeat(review.rating)}</div>
+          <p className="comment">{review.comment}</p>
+          <p className="author">{review.user_name}</p>
+          <p className="date">{new Date(review.created_at).toLocaleDateString()}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+Create/Update Review Form
+import { useState, useEffect } from 'react';
+import { 
+  checkUserReviewedProduct, 
+  createReview, 
+  updateReview 
+} from './services/api';
+
+function ReviewForm({ productId, userId, onSuccess }) {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+  const [existingReview, setExistingReview] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    checkExistingReview();
+  }, [productId]);
+
+  const checkExistingReview = async () => {
+    const result = await checkUserReviewedProduct(productId);
+    
+    if (result.has_reviewed) {
+      setExistingReview(result.review);
+      setRating(result.review.rating);
+      setComment(result.review.comment || '');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (existingReview) {
+        // Update existing review
+        await updateReview(existingReview.id, { rating, comment });
+        alert('Review updated successfully!');
+      } else {
+        // Create new review
+        await createReview(productId, userId, { rating, comment });
+        alert('Review submitted successfully!');
+      }
+      
+      onSuccess();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h3>{existingReview ? 'Update' : 'Write'} Your Review</h3>
+      
+      {/* Star Rating */}
+      <div className="star-rating">
+        {[1,2,3,4,5].map(star => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setRating(star)}
+            className={rating >= star ? 'active' : ''}
+          >
+            ⭐
+          </button>
+        ))}
+      </div>
+
+      {/* Comment */}
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Share your experience (optional)"
+        rows={4}
+      />
+
+      <button type="submit" disabled={loading}>
+        {loading ? 'Submitting...' : existingReview ? 'Update Review' : 'Submit Review'}
+      </button>
+    </form>
+  );
+}
+
+Featured Reviews Carousel
+function FeaturedReviews() {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    fetchFeaturedReviews();
+  }, []);
+
+  const fetchFeaturedReviews = async () => {
+    const reviews = await getFeaturedReviews(6);
+    setReviews(reviews);
+  };
+
+  return (
+    <div className="featured-reviews">
+      <h2>What Our Customers Say</h2>
+      <div className="reviews-grid">
+        {reviews.map(review => (
+          <div key={review.id} className="review-card">
+            <img src={review.product_image} alt={review.product_name} />
+            <div className="rating">{'⭐'.repeat(review.rating)}</div>
+            <p className="comment">"{review.comment.substring(0, 100)}..."</p>
+            <p className="product">{review.product_name}</p>
+            <p className="author">- {review.user_name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================================
+   ADDRESSES
+================================ */
+
+// Get user's addresses
+export const getUserAddresses = (userId) =>
+  backendFetch(`/users/${userId}/addresses`);
+
+// Get single address
+export const getAddressById = (userId, addressId) =>
+  backendFetch(`/users/${userId}/addresses/${addressId}`);
+
+// Get default address
+export const getDefaultAddress = (userId) =>
+  backendFetch(`/users/${userId}/addresses/default`);
+
+// Create address
+export const createAddress = (userId, addressData) =>
+  backendFetch(`/users/${userId}/addresses`, {
+    method: "POST",
+    body: JSON.stringify(addressData),
+  });
+
+// Update address
+export const updateAddress = (userId, addressId, addressData) =>
+  backendFetch(`/users/${userId}/addresses/${addressId}`, {
+    method: "PUT",
+    body: JSON.stringify(addressData),
+  });
+
+// Delete address
+export const deleteAddress = (userId, addressId) =>
+  backendFetch(`/users/${userId}/addresses/${addressId}`, {
+    method: "DELETE",
+  });
+
+// Set default address
+export const setDefaultAddress = (userId, addressId) =>
+  backendFetch(`/users/${userId}/addresses/${addressId}/set-default`, {
+    method: "PUT",
+  });
+
+// Get formatted address
+export const getFormattedAddress = (userId, addressId, type = 'display') =>
+  backendFetch(`/users/${userId}/addresses/${addressId}/format?type=${type}`);
+
+// Check if user has addresses
+export const checkUserHasAddresses = (userId) =>
+  backendFetch(`/users/${userId}/addresses/check`);
+
+// Validate address
+export const validateAddress = (userId, addressData) =>
+  backendFetch(`/users/${userId}/addresses/validate`, {
+    method: "POST",
+    body: JSON.stringify(addressData),
+  });

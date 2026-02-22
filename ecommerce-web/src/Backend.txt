@@ -1,0 +1,303 @@
+🧠 Step 1 —Backend Modules
+
+split backend into:
+
+/src
+  /config
+  /middlewares
+  /modules
+      /auth
+      /users
+      /products
+      /categories
+      /cart
+      /orders
+      /reviews
+      /addresses
+  /utils
+  app.js
+  server.js
+
+
+Each module should have:
+
+controller.js
+service.js
+route.js
+
+
+🏗 Step 2 — Core Features You Must Build First (In Order)
+
+Build backend in this order:
+
+1️⃣ Authentication System (Foundation)
+
+Everything depends on this.
+You need:
+Register
+Login
+JWT authentication
+Password hashing (bcrypt)
+Role check (admin)
+
+1. Register User
+POST   /api/auth/register
+{
+  "email": "daniel@test.com",
+  "password": "123456",
+  "first_name": "Daniel",
+  "last_name": "Jie",
+  "phone": "0123456789"
+}
+2. User Login (Bearer Token)
+POST   /api/auth/login (email, password)
+{
+  "email": "daniel@test.com",
+  "password": "123456"
+}
+3. User Logout (Bearer Token)
+POST   /api/auth/logout (Bearer Token)
+4. Get User Info
+GET    /api/auth/me (Bearer Token)
+5. Google Login
+POST /api/auth/google
+{
+  
+}
+
+2️⃣ Product & Category API
+
+GET products
+GET product by id
+Filter by category
+Search
+Admin CRUD
+
+1. Get all products
+GET /api/products
+2. Search products
+GET /api/products/search?q=laptop
+3. Filter by price
+GET /api/products?min_price=100&max_price=500"
+4. Get categories
+GET /api/categories
+5. Get category by slug
+GET /api/categories/slug/electronics
+
+3️⃣ Cart Logic
+
+Get user cart
+Add to cart
+Update quantity
+Remove item
+
+
+1. Get cart by userid
+GET /api/cart/:userID (Bearer Token)
+3. Create cart item
+POST /api/cart/user_id/items (Bearer Token)
+{
+  "product_id": 2,
+  "quantity": 3
+}
+4. Update cart item quantity
+PUT /api/cart/:userId/items/:cart_item_id (Bearer Token)
+{
+    "quantity" : 2
+}
+5. Check Product in Cart
+GET /api/cart/user_id/check/product_id
+6.Get Cart Item count
+GET /api/cart/user_id/count
+7. Get cart summary
+GET /api/cart/{{userId}}/summary
+8. Validate Cart (Before Checkout) (if stock problem, validation false)
+GET /api/cart/user_id/validate
+9. Bulk Update Cart Item
+PUT /api/cart/user_id/items
+{
+  "updates": [
+    {
+      "cart_item_id": 20,
+      "quantity": 2
+    }
+  ]
+}
+
+
+6. Remove Specific Item
+DELETE /api/cart/user_id/items/:cart_item_id (Bearer Token)
+7. Clear Entire Cart
+DELETE /api/cart/user_id (Bearer Token)
+
+4️⃣ Order / Checkout Logic
+
+Validate shipping_address exists
+Check cart exists
+Check cart not empty
+Validate stock
+Validate product is_active
+Calculate total
+Insert into orders (status = pending)
+Insert order_items
+Reduce stock
+Clear cart
+Commit transaction
+
+1.Create Order (from cart or buy now)
+POST /api/orders
+{
+  "shipping_address": "123 Jalan Ampang, Kuala Lumpur",
+  "payment_intent_id": "pi_test_123"
+}
+{
+  "shipping_address": "123 Jalan Ampang",
+  "payment_intent_id": "pi_test_456",
+  "product_id": "PRODUCT_UUID", (buy now)
+  "quantity": 2
+}
+2. Get Current User
+GET /api/orders/me
+Optional Query:
+?status=pending
+?limit=10
+?offset=0
+?sort=total_amount
+?order=ASC
+3. Get Current user stats
+GET /api/orders/me/stats
+4. Get recents orders
+GET /api/orders/me/recent?limit=3
+5. Get single orders
+GET /api/orders/:orderId (admin can see all orders)
+6. Get order timeline
+GET /api/orders/:orderId/timeline
+7. Can review check
+GET /api/orders/:orderId/can-review
+8. Cancel order (if shipped can not cancel)
+PUT /api/orders/:orderId/cancel
+9. Update order status
+PUT /api/orders/:orderId/status
+{
+  "status": "processing" (user cannot try to update to ship, also canot from pending to delivered)
+}
+10. Get specific user orders 
+GET /api/orders/user/:userId
+11. Admin - get all orders
+GET /api/orders/admin/all
+filter available:
+?status=pending
+?user_id=UUID
+?min_amount=50
+?max_amount=500
+?start_date=2026-01-01
+?end_date=2026-12-31
+?limit=20
+?offset=0
+?sort=created_at
+?order=DESC
+
+12. GET /api/orders/product/:orderId
+Get Each order status contain what products
+
+** User cannot get other user order, update status to processing, cancel delivered order.
+** If stock is insuficient, cancel order
+
+5️⃣ Reviews
+
+Add review (only if purchased)
+Get product reviews
+
+1. Create Reviews (Bearer Token)
+POST /api/products/:productId/reviews
+{
+  "rating": 5,
+  "comment": "This product is absolutely amazing. Very high quality and worth the price!"
+}
+2. Get Products Reviews (Bearer Token)
+GET /api/products/PRODUCT_UUID/reviews
+3. Get Rating Stats Only (Bearer Token)
+GET /api/products/PRODUCT_UUID/reviews/stats
+4. Check if user viewed (Bearer Token)
+GET /api/products/PRODUCT_UUID/reviews/check
+5. Update Reviews (✔ Owner updates → success, ❌ Another user updates → 403, ✔ Admin updates → success)
+PUT /api/products/PRODUCT_UUID/reviews/REVIEW_ID (Bearer Token)
+{
+  "rating": 4,
+  "comment": "Updated comment"
+}
+6.Delete Reviews(✔ Owner deletes → success, ❌ Another user deletes → 403, ✔ Admin deletes → success)
+DELETE /api/products/PRODUCT_UUID/reviews/REVIEW_ID
+7. Get Single Reviews
+GET /api/reviews/REVIEW_ID
+8. Get Current User Reviews (Bearer Token)
+GET /api/reviews/me/reviews
+9. Get Specific User Reviews (PUBLIC)
+GET /api/users/USER_UUID/reviews
+10. Get Featured Reviews (rating >= 4, comment > 50 characters, product active)
+GET /api/reviews/featured?limit=5
+11. Admin Get All Reviews
+GET /api/reviews/admin/all
+
+
+
+6️⃣ Address Management
+
+Add address
+Set default address
+Update / delete address
+
+(All Include Bearer Token)
+1. Check if User have address
+GET /api/users/USER_A_ID/addresses/check
+2. Validate Address (without saving)
+POST /api/users/USER_A_ID/addresses/validate
+{
+  "full_name": "Daniel Jie",
+  "address_line1": "123 Jalan Ampang",
+  "city": "Kuala Lumpur",
+  "state_province": "Wilayah Persekutuan",
+  "postal_code": "50450",
+  "country_code": "MY"
+}
+3. Create First Address
+POST /api/users/USER_A_ID/addresses
+{
+  "address_label": "Home",
+  "full_name": "Daniel Jie",
+  "phone_number": "0123456789",
+  "address_line1": "123 Jalan Ampang",
+  "city": "Kuala Lumpur",
+  "state_province": "WP Kuala Lumpur",
+  "postal_code": "50450",
+  "country_code": "MY"
+}
+4. Get All Address
+GET /api/users/USER_A_ID/addresses
+5. Create Second Address (Not default)
+POST /api/users/USER_A_ID/addresses
+{
+  "address_label": "Office",
+  "full_name": "Daniel Jie",
+  "address_line1": "456 Jalan Tun Razak",
+  "city": "Kuala Lumpur",
+  "state_province": "WP Kuala Lumpur",
+  "postal_code": "50400",
+  "country_code": "MY"
+}
+6. Set Second Address as Default
+PUT /api/users/USER_A_ID/addresses/ADDRESS_ID/set-default
+7. Get Default Address
+GET /api/users/USER_A_ID/addresses/default
+8. Get Single Address
+GET /api/users/USER_A_ID/addresses/ADDRESS_ID
+9. Update Address
+PUT /api/users/USER_A_ID/addresses/ADDRESS_ID
+{
+  "city": "Petaling Jaya"
+}
+10. Delete Address
+DELETE /api/users/USER_A_ID/addresses/ADDRESS_ID
+11. GET /api/users/USER_A_ID/addresses/ADDRESS_ID/format
+
+
