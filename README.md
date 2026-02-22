@@ -38,3 +38,7 @@ Database - PostgreSQL
 
 API - Free Ecommerce Api https://kolzsticks.github.io/Free-Ecommerce-Products-Api/main/products.json
     - stripe api for payment
+
+
+npm run dev (Running front End) (Path in ecommerce-web)
+nodemon server.js (Running Back End) (Path in ecommerce-web/src)
