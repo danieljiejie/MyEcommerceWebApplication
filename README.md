@@ -22,6 +22,7 @@ Core Functionalities and Structure:
 -Search
 <img width="1611" height="923" alt="image" src="https://github.com/user-attachments/assets/c61e7d1a-0f64-40c2-8ea0-77ff5c00fba9" />
 
+Currently still updated....
 
 🛒 Cart Module
 -Add to cart
