@@ -11,7 +11,7 @@ import { CartProvider } from './context/CartContext';
 import ProductDetail from './components/ProductDetail';
 import Checkout from './components/Checkout';
 import ForgotPassword from './pages/ForgotPassword';
-
+import ChatBot from './components/ChatBot';
 
 function AppContent() {
   const [search, setSearch] = useState("");
@@ -46,7 +46,7 @@ function AppContent() {
             
         </Routes>
 
-
+        <ChatBot />
       </main>
     </div>
   );

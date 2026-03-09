@@ -9,6 +9,7 @@ import ordersRoutes from "./modules/orders/orders.routes.js";
 import reviewsRoutes, { userReviewsRoutes } from "./modules/reviews/reviews.routes.js";
 import addressesRoutes from "./modules/addresses/addresses.routes.js";
 import paymentRouter from "./modules/payments/payment.routes.js";
+import chatRouter from "./modules/chatbot/chatbot.routes.js";
 
 const app = express();
 
@@ -38,7 +39,7 @@ app.use("/api/reviews", reviewsRoutes);        // Standalone review routes
 app.use("/api/users/:userId/reviews", userReviewsRoutes); // User's reviews
 app.use("/api/users/:userId/addresses", addressesRoutes);  // User's addresses
 app.use("/api/payments", paymentRouter);
-
+app.use("/api/chatbot", chatRouter);
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
