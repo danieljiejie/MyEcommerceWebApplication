@@ -47,6 +47,9 @@ Payment (mimic real payment environment)
 -Make Payment (connect to stripe api)
 <img width="1322" height="803" alt="image" src="https://github.com/user-attachments/assets/0c1f08fa-2662-497f-813c-1768fb507caa" />
 
+Chatbot (simple customer cupport)
+-Can repply simple question to help customer like Check real order status by order ID, Look up products & stock, See user's order history and Check cart contents.
+<img width="1820" height="750" alt="image" src="https://github.com/user-attachments/assets/f1d2c510-0cc4-4d42-8bb7-81fb3393e8e5" />
 
 Frontend - ReactJS
 Backend - NodeJS + Express
